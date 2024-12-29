@@ -1,0 +1,10 @@
+---
+- name: Converge
+  hosts: all
+  become: no
+  gather_facts: false
+
+  tasks:
+    - name: node_exporter role
+      include_role:
+        name: node_exporter

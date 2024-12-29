@@ -1,0 +1,63 @@
+---
+- name: Check if Python3 binary exists
+  ansible.builtin.stat:
+    path: /usr/bin/python3
+  register: python3_check
+
+- name: Install Python3 if not present
+  ansible.builtin.apt:
+    name: python3
+    state: present
+    update_cache: yes
+  when: not python3_check.stat.exists
+
+- name: Ensure Node Exporter directory exists
+  ansible.builtin.file:
+    path: "/tmp/node_exporter_{{ node_exporter_version }}"
+    state: directory
+
+- name: Download Node Exporter
+  ansible.builtin.get_url:
+    url: "{{ node_exporter_url }}"
+    dest: "/tmp/node_exporter_{{ node_exporter_version }}.tar.gz"
+    mode: '0755'
+    validate_certs: no
+
+- name: Extract Node Exporter
+  ansible.builtin.unarchive:
+    src: "/tmp/node_exporter_{{ node_exporter_version }}.tar.gz"
+    dest: "/tmp/node_exporter_{{ node_exporter_version }}"
+    remote_src: yes
+
+- name: Copy Node Exporter binary to install path
+  ansible.builtin.copy:
+    src: "/tmp/node_exporter_{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+    dest: "{{ node_exporter_install_path }}/node_exporter"
+    mode: '0755'
+    owner: root
+    group: root
+    remote_src: yes
+
+- name: Create a node_exporter system user
+  ansible.builtin.user:
+    name: node_exporter
+    system: yes
+    shell: /sbin/nologin
+
+- name: Deploy Node Exporter service file from template
+  ansible.builtin.template:
+    src: "node_exporter.service.j2"
+    dest: "/etc/systemd/system/node_exporter.service"
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: Reload systemd manager configuration
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Enable and start Node Exporter service
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: started
+    enabled: yes

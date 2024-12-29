@@ -1,0 +1,15 @@
+galaxy_info:
+  author: Olga Konstantinova
+  description: Node_exporter setup role
+  company: ITMO
+  license: BSD
+  min_ansible_version: 2.18
+  platforms:
+    - name: Ubuntu
+      versions:
+        - 20.04
+  galaxy_tags:
+    - node_exporter
+  role_name: node_exporter
+  namespace: itmo
+dependencies: []
